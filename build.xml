@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='ISO-8859-1'?>
+<project name="CacheTest" default="test" basedir=".">
+ 
+ <path id="p">
+   <pathelement location="lib/testng-6.8.jar"/>
+   <pathelement location="bin"/>
+ </path>  
+ 
+   <target name="clean" >
+      <delete verbose="false">
+         <fileset dir="bin" includes="**/*.class" />
+      </delete>
+   </target>
+
+   <target name="compile" depends="clean">
+      <javac srcdir="src" destdir="bin" verbose="false" includeantruntime="false">
+         <classpath refid="p"/>
+      </javac>
+   </target>
+
+   <!--target name="run" >
+      <java classname="org.avekceeb.cachedemo.Benchmark">
+         <classpath refid="p"/>
+      </java>
+   </target-->
+
+ <taskdef name="testng" classpathref="p"  classname="org.testng.TestNGAntTask" />
+ 
+ <target name="test" depends="compile">
+   <testng classpathref="p" >
+     <classfileset dir="bin" includes="**/*.class"/>
+   </testng>
+ </target>
+ 
+</project>
