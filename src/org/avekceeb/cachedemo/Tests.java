@@ -57,11 +57,11 @@ public class Tests {
     @DataProvider
     public Object[][] dataForMultithreadSanity() {
         Cacheable<Object, Object> fifo =
-            new CacheBuilder<Object, Object>().createCache("fifo", cacheSize,
-threadTime * 1000);
+            new CacheBuilder<Object, Object>().
+            	createCache("fifo", cacheSize, threadTime * 1000);
         Cacheable<Object, Object> lru =
-                new CacheBuilder<Object, Object>().createCache("lru", cacheSize,
-threadTime * 1000);
+                new CacheBuilder<Object, Object>().
+                	createCache("lru", cacheSize, threadTime * 1000);
         for (int i=0; i<cacheSize; i++) {
             fifo.put(i, data.get(i));
             lru.put(i, data.get(i));

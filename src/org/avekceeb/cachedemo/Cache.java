@@ -5,7 +5,7 @@ import java.util.Timer;
 
 public class Cache<K,V> implements Cacheable<K,V> {
     protected int _size;
-    protected long _ttl; // Time To Live (time-to-die actually)
+    protected long _ttl;
     protected int _misses;
     protected int _hits;
     protected CacheTable<K,CacheEntry<V>> table;
@@ -13,18 +13,18 @@ public class Cache<K,V> implements Cacheable<K,V> {
     protected Timer timer;
     class Ticker extends TimerTask {
         public void run() {
+            ArrayList<K> forRemoval = new ArrayList<>();
             if (null == table)
                 return;
             synchronized(table) {
-            ArrayList<K> forRemoval = new ArrayList<>();
-            for (K k : table) {
-                CacheEntry<V> e = table.get(k);
-                if (null != e) {
-                    if ( e.ttl < System.currentTimeMillis() ) {
-                        forRemoval.add(k);
-                    }
-                }
-            }
+	            for (K k : table) {
+	                CacheEntry<V> e = table.get(k);
+	                if (null != e) {
+	                    if ( e.ttl < System.currentTimeMillis() ) {
+	                        forRemoval.add(k);
+	                    }
+	                }
+	            }
             }
             for (K i : forRemoval)
                 table.del(i);
@@ -38,7 +38,7 @@ public class Cache<K,V> implements Cacheable<K,V> {
         _ttl = ttl;
         table = t;
         // TODO: set limits
-        long timeFactor = ttl * 2 / size;
+        long timeFactor = ttl / 2;
         timer = new Timer();
         ticker = new Ticker();
         timer.schedule(ticker, timeFactor, timeFactor);
@@ -49,22 +49,11 @@ public class Cache<K,V> implements Cacheable<K,V> {
     }
 
     public String toString() {
-        float req = _hits + _misses;
-        String s = this.getClass().getName() +
-                " <" + table.getClass().getName() + ">" +
-                " TTL=" + _ttl + " Size=" + _size +
-                " Hits=" + _hits + " Misses=" + _misses +
-                " hits ratio=" + ((0 == req) ? "?" : 100.0 * _hits/req) + "%";
-        return s;
-    }
-
-    public String dumpKeys() {
-        String s = "\n";
-        for (K k : table) {
-            CacheEntry<V> e = table.get(k);
-            s += k + ":" + ((null == e) ? e : e.value) + " ";
-        }
-        return s + "\n";
+        return String.format("[ %s<%s> ttl=%dms size=%d requests=%d hits=%.2f%% ]",
+                this.getClass().getName(),
+                table.getClass().getName(),
+                _ttl,  _size, _hits + _misses,
+                ((0 == _hits+_misses) ? 0.0 : 100.0 * _hits/(_hits+_misses)));
     }
 
     public V get(K key) {
@@ -83,8 +72,18 @@ public class Cache<K,V> implements Cacheable<K,V> {
         }
     }
 
-    public void remove(Object key) {}
+    public void remove(K key) {
+    	synchronized(table) {
+    		table.del(key);
+    	}
+    }
 
-    public void clear() {}
+    public void clear() {
+    	synchronized(table) {
+    		table.clear();
+    		_hits = 0;
+    		_misses = 0;
+    	}
+    }
 
 }

@@ -71,7 +71,8 @@ public class LRUTable<K,V> implements CacheTable<K,V>  {
     }
 
     public void clear() {
-
+    	map.clear();
+    	lru.clear();
     }
 
     public Iterator<K> iterator() {

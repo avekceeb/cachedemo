@@ -44,7 +44,15 @@ public class FIFOTable<K,V> implements CacheTable<K,V> {
             tail = i;
         }
     }
-
+    
+    public void clear() {
+        for (int i = 0; i < keys.size(); i++) {
+            keys.set(i, null);
+            values.set(i, null);
+        }
+        tail = 0;
+    }
+    
     public int size() {
         return keys.size();
     }
