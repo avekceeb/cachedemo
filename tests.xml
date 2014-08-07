@@ -30,6 +30,7 @@
             <methods>
                 <exclude name=".*" />
                 <include name="testBenchmark" />
+                <include name="testBenchmarkString" />
                 <include name="testStatistic" />
             </methods>
             </class>

@@ -9,20 +9,32 @@ import org.testng.annotations.AfterMethod;
 
 import java.util.Random;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class Tests {
 
-    Random rnd = new Random();
-    int getters = 10;
-    int setters = 10;
-    int rounds = 1000;
+    public final static Random rnd = new Random();
     int smallCacheSize = 10;
     int cacheSize = 2000;
-    int dataSize = cacheSize * 40;
+    int dataSize = cacheSize * 4;
     // fixed amount of "hot" request:
     int frequentDataSize = cacheSize/2;
     HashMap<Object, Object> data = new HashMap<>(dataSize);
+    HashMap<String, String> dataBig = new HashMap<>(dataSize);
+    public static int stringKeyLen = 20;
+    public static int stringValueLen = 50;
     long threadTime = Cacheable.Minute;
+
+    public static String rndString(int len) {
+        String chars =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567";
+        int charsLen = chars.length();
+        char[] s = new char[len];
+        for (int i=0; i<len; i++)
+            s[i] = chars.charAt(rnd.nextInt(charsLen));
+        return new String(s);
+    }
 
     @BeforeClass
     public void init() {
@@ -30,6 +42,9 @@ public class Tests {
         //Assert.assertTrue(cacheSize < dataSize);
         for (int i=0; i<dataSize; i++) {
             data.put(i, rnd.nextInt());
+        }
+        for (int i=0; i<dataSize; i++) {
+            dataBig.put(rndString(stringKeyLen), rndString(stringValueLen));
         }
     }
 
@@ -79,7 +94,10 @@ public class Tests {
         return createCaches(cacheSize, threadTime / 4);
     }
 
-    @Test (dataProvider = "dataForSanity", groups="sanity")
+    /*
+     * Tests basic opearations 
+     */
+    @Test (dataProvider = "dataForSanity")
     public void testSanity(String strategy, int length) {
         Cacheable<Object, Object> c =
             new CacheBuilder<Object, Object>().createCache(strategy, length, 30 * Cacheable.Minute);
@@ -160,6 +178,9 @@ public class Tests {
         System.out.println("[Elapsed: " + start + " ms]");
     }
     
+    /*
+     * Operations per second
+     */
     @Test (dataProvider = "dataForMultithreadSanity")
     public void testBenchmark(Cacheable<Object,Object> c) {
         int length = c.size();
@@ -171,7 +192,7 @@ public class Tests {
             }
         }
         start = (System.currentTimeMillis() - start);
-        System.out.format("[Get Ops/sec: %d]%n" , (100*Cacheable.Second*length)/start);
+        System.out.format("[Get (Ops/sec): %d]%n" , (100*Cacheable.Second*length)/start);
 
         start = System.currentTimeMillis();
         for (int i=0; i<10; i++) {
@@ -193,6 +214,41 @@ public class Tests {
 
     }
 
+
+    /*
+     * Operations per second (for strings)
+     */
+    @Test (dataProvider = "dataForSanity")
+    public void testBenchmarkString(String strategy, int sz) {
+        int length = dataBig.size();
+        Cacheable<String, String> c =
+            new CacheBuilder<String, String>().createCache(strategy, length, 30 * Cacheable.Minute);
+        System.out.println(c.toString());
+        long start = System.currentTimeMillis();
+        for (Map.Entry<String,String> m : dataBig.entrySet()) {
+            c.put(m.getKey(), m.getValue());
+        }
+        start = (System.currentTimeMillis() - start);
+        System.out.format("[Put String (Ops/sec): %d]%n", (Cacheable.Second*length)/start);
+
+        start = System.currentTimeMillis();
+        for (String k : dataBig.keySet()) {
+            c.get(k);
+        }
+        start = (System.currentTimeMillis() - start);
+        System.out.format("[Get String (Ops/sec): %d]%n", (Cacheable.Second*length)/start);
+
+        start = System.currentTimeMillis();
+        for (String k : dataBig.keySet()) {
+            c.remove(k);
+        }
+        start = (System.currentTimeMillis() - start);
+        System.out.format("[Remove String (Ops/sec): %d]%n", (Cacheable.Second*length)/start);
+    }
+
+    /*
+     * Tests asyncronous multiclient
+     */
     @Test (dataProvider = "dataForStability", threadPoolSize = 10, invocationCount = 10)
     public void testStability(Cacheable<Object,Object> c) throws InterruptedException {
     	long timeToStop = System.currentTimeMillis() + threadTime;
@@ -218,7 +274,8 @@ public class Tests {
              }
              Thread.sleep(rnd.nextInt(10));
         }
-        System.out.format("[Thread #%d: gets=%d puts=%d removes=%d clears=%d]%n", Thread.currentThread().getId(), gets, puts, removes, clears);
+        System.out.format("[Thread #%d: gets=%d puts=%d removes=%d clears=%d]%n",
+            Thread.currentThread().getId(), gets, puts, removes, clears);
     }
 
 }
