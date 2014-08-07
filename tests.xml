@@ -1,0 +1,39 @@
+<suite name="CacheDemoTestSuite" verbose="2" >
+
+    <test name="Functional">
+        <classes>
+            <class name="org.avekceeb.cachedemo.Tests">
+                <methods>
+                    <exclude name=".*" />
+                    <include name="testSanity" />
+                    <include name="testExpiry" />
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Stability">
+        <classes>
+            <class name="org.avekceeb.cachedemo.Tests">
+                <methods>
+                    <exclude name=".*" />
+                    <include name="testMultithreadSanity" />
+                    <include name="testStability" />
+                </methods>
+            </class>
+        </classes>
+    </test>
+
+    <test name="Benchmark">
+        <classes>
+            <class name="org.avekceeb.cachedemo.Tests">
+            <methods>
+                <exclude name=".*" />
+                <include name="testBenchmark" />
+                <include name="testStatistic" />
+            </methods>
+            </class>
+        </classes>
+    </test>
+
+</suite>

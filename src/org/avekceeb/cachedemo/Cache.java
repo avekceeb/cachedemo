@@ -57,6 +57,8 @@ public class Cache<K,V> implements Cacheable<K,V> {
     }
 
     public V get(K key) {
+    	if (null == key)
+    		return null;
         CacheEntry<V> e = table.get(key);
         if (null != e) {
             _hits++;
@@ -67,12 +69,16 @@ public class Cache<K,V> implements Cacheable<K,V> {
     }
 
     public void put(K key,V value) {
+    	if (null == key)
+    		return;
         synchronized(table) {
             table.put(key, new CacheEntry<V>(value, System.currentTimeMillis() + _ttl));
         }
     }
 
     public void remove(K key) {
+    	if (null == key)
+    		return;
     	synchronized(table) {
     		table.del(key);
     	}
