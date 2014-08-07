@@ -22,8 +22,7 @@ public class Tests {
     // fixed amount of "hot" request:
     int frequentDataSize = cacheSize/2;
     HashMap<Object, Object> data = new HashMap<>(dataSize);
-    long threadTime = Cacheable.Minute / 2;
-    long methodTime;
+    long threadTime = Cacheable.Minute;
 
     @BeforeClass
     public void init() {
@@ -194,11 +193,9 @@ public class Tests {
 
     }
 
-    //@Test (dataProvider = "dataForStability", threadPoolSize = 10, invocationCount = 1)
-    @Test (dataProvider = "dataForStability", threadPoolSize = 4, invocationCount = 4)
+    @Test (dataProvider = "dataForStability", threadPoolSize = 10, invocationCount = 10)
     public void testStability(Cacheable<Object,Object> c) throws InterruptedException {
-        System.out.println("Thread: " + Thread.currentThread().getId());
-        long timeToStop = System.currentTimeMillis() + threadTime;
+    	long timeToStop = System.currentTimeMillis() + threadTime;
         int currentKey, guess, puts=0, gets=0, removes=0, clears=0;
         while (System.currentTimeMillis() < timeToStop) {
         	 guess = rnd.nextInt(100);
@@ -219,26 +216,9 @@ public class Tests {
                 c.clear();
                 clears++;
              }
-             Thread.sleep(threadTime/2000);
+             Thread.sleep(rnd.nextInt(10));
         }
-        System.out.format("[Stability parallel: gets=%d puts=%d removes=%d clears=%d]%n", gets, puts, removes, clears);
+        System.out.format("[Thread #%d: gets=%d puts=%d removes=%d clears=%d]%n", Thread.currentThread().getId(), gets, puts, removes, clears);
     }
 
-    //@Test (dataProvider = "dataForStability", threadPoolSize = 10, invocationCount = 2)
-    public void testRequestingClient(Cacheable<Object,Object> c) throws InterruptedException {
-        long timeToStop = System.currentTimeMillis() + threadTime;
-        while (System.currentTimeMillis() < timeToStop) {
-                System.out.println("Requesting: " + Thread.currentThread().getId());
-                Thread.sleep(threadTime/16);
-        }
-    }
-    
-    //@Test (dataProvider = "dataForStability", threadPoolSize = 10, invocationCount = 1)
-    public void testUpdatingClient(Cacheable<Object,Object> c) throws InterruptedException {
-        long timeToStop = System.currentTimeMillis() + threadTime;
-        while (System.currentTimeMillis() < timeToStop) {
-                System.out.println("Updating: " + Thread.currentThread().getId());
-                Thread.sleep(threadTime/4);
-        }
-    }
 }
